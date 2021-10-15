@@ -1,5 +1,26 @@
 export const BRIDGE_ABI = [
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'token',
+        type: 'address',
+      },
+      {
+        internalType: 'address',
+        name: '_admin',
+        type: 'address',
+      },
+      {
+        internalType: 'uint256',
+        name: '_fees',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'nonpayable',
+    type: 'constructor',
+  },
+  {
     anonymous: false,
     inputs: [
       {
@@ -74,7 +95,20 @@ export const BRIDGE_ABI = [
     ],
     name: 'depositTokens',
     outputs: [],
-    stateMutability: 'nonpayable',
+    stateMutability: 'payable',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'fees',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
     type: 'function',
   },
   {
@@ -99,6 +133,19 @@ export const BRIDGE_ABI = [
       },
     ],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '_fee',
+        type: 'uint256',
+      },
+    ],
+    name: 'setFee',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
   {

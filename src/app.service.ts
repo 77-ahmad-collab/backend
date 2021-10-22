@@ -5,6 +5,7 @@ import { Cron } from '@nestjs/schedule';
 
 import { chainMap } from './utils/chainMap';
 import getEvents from './utils/getEvents';
+import getWithdrawEvents from './utils/getWithdrawEvents';
 import getChainMap from './utils/getChainMap';
 
 import { Block, BlockDocument } from './schemas/block.schema';
@@ -29,7 +30,7 @@ export class AppService {
     const blocks = await this.blockModel.findById(process.env.BRIDGE_ID);
     const { events, ethNewBlock, bnbNewBlock } = await getEvents(blocks);
 
-    console.log('>>>', events);
+    // console.log('>>>', events[0]?.returnValues);
 
     if (events && events != undefined && events.length != 0) {
       for (const event of events) {
@@ -44,6 +45,12 @@ export class AppService {
           Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
           '<<<<<<<<<<<<<<<<',
         );
+        let signature = await getSignatures({
+          sender: event.returnValues.from,
+          receiver: event.returnValues.to,
+          nonce: event.returnValues.nonce,
+          amount: Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
+        });
 
         await this.migrationModel.findOneAndUpdate(
           { fromHash: event.transactionHash },
@@ -57,8 +64,8 @@ export class AppService {
             fromHash: event.fromHash,
             nonce: event.returnValues.nonce,
             migrationID: event.returnValues.transactionID,
+            signature: signature,
             isMigrated: false,
-            isPending: false,
           },
           { upsert: true, new: true },
         );
@@ -75,92 +82,30 @@ export class AppService {
   }
 
   @Cron('*/15 * * * * *')
-  async Migrate() {
-    const migrations = await this.migrationModel.find({
-      isMigrated: false,
-      isPending: false,
-    });
-    const newChainMap = await getChainMap(chainMap);
+  async Withdraw() {
+    const blocks = await this.blockModel.findById(
+      process.env.BRIDGE_Withdraw_ID,
+    );
+    const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(blocks);
 
-    for (const migration of migrations) {
-      if (newChainMap[migration.toChain].skip) {
-        continue;
+    console.log('Withdraw>>>', events);
+
+    if (events && events != undefined && events.length != 0) {
+      for (const event of events) {
+        await this.migrationModel.findOneAndUpdate(
+          { signature: event.returnValues.sign },
+          { isMigrated: true },
+        );
       }
-
-      let count = await newChainMap[
-        migration.toChain
-      ].web3.eth.getTransactionCount(
-        newChainMap[migration.toChain].admin,
-        'pending',
-      );
-
-      let signatures = await getSignatures(migration);
-
-      console.log(
-        'params ==>>>',
-        migration.sender,
-        migration.receiver,
-        newChainMap[migration.toChain].web3.utils.toWei(
-          migration.amount.toString(),
-          'gwei',
-        ),
-        migration.nonce,
-        signatures,
-      );
-
-      let transaction = await newChainMap[
-        migration.toChain
-      ].web3.eth.accounts.signTransaction(
-        {
-          from: newChainMap[migration.toChain].admin,
-          to: newChainMap[migration.toChain].bridge,
-          data: newChainMap[migration.toChain].contract.methods
-            .withdrawTokens(
-              migration.sender,
-              migration.receiver,
-              newChainMap[migration.toChain].web3.utils.toWei(
-                migration.amount.toString(),
-                'gwei',
-              ),
-              migration.nonce,
-              signatures,
-            )
-            .encodeABI(),
-          gasPrice: await newChainMap[migration.toChain].web3.utils.toHex(
-            10 * 1000000000,
-          ),
-          nonce: count,
-          gasLimit: newChainMap[migration.toChain].web3.utils.toHex(8000000),
-          chainId: migration.toChain,
-        },
-        newChainMap[migration.toChain].privatekey,
-      );
-
-      newChainMap[migration.toChain].web3.eth
-        .sendSignedTransaction(transaction.rawTransaction)
-        .on('transactionHash', async (hash) => {
-          console.log('hash', hash);
-          await this.migrationModel.findOneAndUpdate(
-            { fromHash: migration.fromHash },
-            { isPending: true },
-          );
-        })
-        .on('confirmation', async (confirmationNumber, receipt) => {
-          if (confirmationNumber == 2) {
-            await this.migrationModel.findOneAndUpdate(
-              { fromHash: migration.fromHash },
-              { isMigrated: true, toHash: receipt.transactionHash },
-            );
-          }
-        })
-        .on('error', async (error) => {
-          console.log('claim transaction error==>>', error);
-          await this.migrationModel.findOneAndUpdate(
-            { fromHash: migration.fromHash },
-            { isPending: false },
-          );
-        });
     }
+
+    await this.blockModel.findOneAndUpdate(
+      { _id: process.env.BRIDGE_Withdraw_ID },
+      {
+        ethBlock: ethNewBlock,
+        bnbBlock: bnbNewBlock,
+      },
+    );
   }
 
   async ClaimStatus(migrationID: string) {
@@ -173,9 +118,47 @@ export class AppService {
         fromChain: migration.fromChain,
         toChain: migration.toChain,
         sender: migration.sender,
+        signature: migration.signature
       };
     } else {
       return { status: false };
+    }
+  }
+
+  async DepositStatus(migrationID: string) {
+    const migration = await this.migrationModel.findOne({ migrationID });
+    if (migration && !migration.isMigrated) {
+      return {
+        status: true,
+        transactionHash: migration.toHash,
+        amount: migration.amount,
+        fromChain: migration.fromChain,
+        toChain: migration.toChain,
+        sender: migration.sender,
+        signature: migration.signature
+      };
+    } else {
+      return { status: false };
+    }
+  }
+
+  async GetUnclaimed(userAddress: string) {
+    const unclaimed = await this.migrationModel.find({
+      sender: userAddress,
+      isMigrated: false,
+    });
+    console.log(unclaimed);
+    if (unclaimed.length) {
+      return {
+        isLeft: true,
+        transactionHash: unclaimed[0].toHash,
+        amount: unclaimed[0].amount,
+        fromChain: unclaimed[0].fromChain,
+        toChain: unclaimed[0].toChain,
+        sender: unclaimed[0].sender,
+      };
+    } else {
+      return { isLeft: true };
     }
   }
 }

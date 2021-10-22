@@ -29,14 +29,14 @@ export class Migration {
   @Prop({ requried: true })
   nonce: number;
 
+  @Prop({ requried: true })
+  signature: string;
+
   @Prop({ required: true })
   migrationID: string;
 
   @Prop({ required: true })
   isMigrated: boolean;
-
-  @Prop({ required: true })
-  isPending: boolean;
 }
 
 export const MigrationSchema = SchemaFactory.createForClass(Migration);

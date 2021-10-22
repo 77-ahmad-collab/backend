@@ -11,8 +11,8 @@ export class Block {
   @Prop({ required: true })
   bnbBlock: number;
 
-  @Prop({ required: true })
-  matBlock: number;
+  // @Prop({ required: true })
+  // matBlock: number;
 }
 
 export const BlockSchema = SchemaFactory.createForClass(Block);

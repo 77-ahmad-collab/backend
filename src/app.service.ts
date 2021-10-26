@@ -88,7 +88,7 @@ export class AppService {
     );
     const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(blocks);
 
-    // console.log('Withdraw>>>', events);
+    console.log('Withdraw>>>', events);
 
     if (events && events != undefined && events.length != 0) {
       for (const event of events) {
@@ -161,8 +161,6 @@ export class AppService {
         signature: unclaimed.signature,
         nonce: unclaimed.nonce
       };
-    } else {
-      return { status: false };
     }
   }
 

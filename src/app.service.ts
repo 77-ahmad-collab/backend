@@ -88,7 +88,7 @@ export class AppService {
     );
     const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(blocks);
 
-    console.log('Withdraw>>>', events);
+    // console.log('Withdraw>>>', events);
 
     if (events && events != undefined && events.length != 0) {
       for (const event of events) {
@@ -111,6 +111,7 @@ export class AppService {
   async ClaimStatus(migrationID: string) {
     const migration = await this.migrationModel.findOne({ migrationID });
     if (migration && migration.isMigrated) {
+      // console.log(migration);
       return {
         status: true,
         transactionHash: migration.toHash,
@@ -135,7 +136,8 @@ export class AppService {
         fromChain: migration.fromChain,
         toChain: migration.toChain,
         sender: migration.sender,
-        signature: migration.signature
+        signature: migration.signature,
+        nonce: migration.nonce
       };
     } else {
       return { status: false };
@@ -143,22 +145,32 @@ export class AppService {
   }
 
   async GetUnclaimed(userAddress: string) {
-    const unclaimed = await this.migrationModel.find({
+    const unclaimed = await this.migrationModel.findOne({
       sender: userAddress,
       isMigrated: false,
     });
-    console.log(unclaimed);
-    if (unclaimed.length) {
+    // console.log(unclaimed);
+    if (unclaimed) {
       return {
-        isLeft: true,
-        transactionHash: unclaimed[0].toHash,
-        amount: unclaimed[0].amount,
-        fromChain: unclaimed[0].fromChain,
-        toChain: unclaimed[0].toChain,
-        sender: unclaimed[0].sender,
+        status: true,
+        transactionHash: unclaimed.toHash,
+        amount: unclaimed.amount,
+        fromChain: unclaimed.fromChain,
+        toChain: unclaimed.toChain,
+        sender: unclaimed.sender,
+        signature: unclaimed.signature,
+        nonce: unclaimed.nonce
       };
     } else {
-      return { isLeft: true };
+      return { status: false };
     }
+  }
+
+  async UpdateToHash(signature: string,transactionHash: string) {
+    // console.log("uodate>>",signature, transactionHash);
+    await this.migrationModel.findOneAndUpdate(
+      { signature: signature },
+      { toHash: transactionHash },
+    );
   }
 }

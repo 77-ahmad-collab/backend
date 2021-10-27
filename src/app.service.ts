@@ -7,6 +7,7 @@ import { chainMap } from './utils/chainMap';
 import getEvents from './utils/getEvents';
 import getWithdrawEvents from './utils/getWithdrawEvents';
 import getChainMap from './utils/getChainMap';
+import { calculateTransferFee } from './utils/calculateTransferFee';
 
 import { Block, BlockDocument } from './schemas/block.schema';
 import { Migration, MigrationDocument } from './schemas/migration.schema';
@@ -30,7 +31,6 @@ export class AppService {
     const blocks = await this.blockModel.findById(process.env.BRIDGE_ID);
     const { events, ethNewBlock, bnbNewBlock } = await getEvents(blocks);
 
-    // console.log('>>>', events[0]?.returnValues);
 
     if (events && events != undefined && events.length != 0) {
       for (const event of events) {
@@ -41,10 +41,7 @@ export class AppService {
           amountInHex.logs[0].data.toString(),
           16,
         );
-        console.log(
-          Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
-          '<<<<<<<<<<<<<<<<',
-        );
+
         let signature = await getSignatures({
           sender: event.returnValues.from,
           receiver: event.returnValues.to,
@@ -52,10 +49,16 @@ export class AppService {
           amount: Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
         });
 
+        const calculateAmount = await calculateTransferFee(
+          Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
+        );
+
+        console.log(">>>>>>>>>>", calculateAmount);
+
         await this.migrationModel.findOneAndUpdate(
           { fromHash: event.transactionHash },
           {
-            amount: Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
+            amount: calculateAmount,
             // amount: 100,
             sender: event.returnValues.from,
             receiver: event.returnValues.to,
@@ -86,15 +89,19 @@ export class AppService {
     const blocks = await this.blockModel.findById(
       process.env.BRIDGE_Withdraw_ID,
     );
-    const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(blocks);
+    const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(
+      blocks,
+    );
 
-    console.log('Withdraw>>>', events);
 
     if (events && events != undefined && events.length != 0) {
       for (const event of events) {
         await this.migrationModel.findOneAndUpdate(
           { signature: event.returnValues.sign },
-          { isMigrated: true },
+          {
+            isMigrated: true,
+            toHash: event.transactionHash,
+          },
         );
       }
     }
@@ -110,8 +117,8 @@ export class AppService {
 
   async ClaimStatus(migrationID: string) {
     const migration = await this.migrationModel.findOne({ migrationID });
-    if (migration && migration.isMigrated) {
-      console.log("claim status");
+    if (migration && migration.isMigrated && migration.toHash) {
+      console.log('claim status');
       return {
         status: true,
         transactionHash: migration.toHash,
@@ -119,7 +126,7 @@ export class AppService {
         fromChain: migration.fromChain,
         toChain: migration.toChain,
         sender: migration.sender,
-        signature: migration.signature
+        signature: migration.signature,
       };
     } else {
       return { status: false };
@@ -127,7 +134,7 @@ export class AppService {
   }
 
   async DepositStatus(migrationID: string) {
-    console.log("deposit status");
+    console.log('deposit status');
     const migration = await this.migrationModel.findOne({ migrationID });
     if (migration && !migration.isMigrated) {
       return {
@@ -138,7 +145,7 @@ export class AppService {
         toChain: migration.toChain,
         sender: migration.sender,
         signature: migration.signature,
-        nonce: migration.nonce
+        nonce: migration.nonce,
       };
     } else {
       return { status: false };
@@ -160,13 +167,13 @@ export class AppService {
         toChain: unclaimed.toChain,
         sender: unclaimed.sender,
         signature: unclaimed.signature,
-        nonce: unclaimed.nonce
+        nonce: unclaimed.nonce,
       };
     }
   }
 
-  async UpdateToHash(signature: string,transactionHash: string) {
-    console.log("uodate>>");
+  async UpdateToHash(signature: string, transactionHash: string) {
+    console.log('uodate>>');
     await this.migrationModel.findOneAndUpdate(
       { signature: signature },
       { toHash: transactionHash },

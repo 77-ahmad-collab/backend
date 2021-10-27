@@ -1,203 +1,345 @@
 export const BRIDGE_ABI = [
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "token",
-        type: "address"
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "_admin",
-        type: "address"
+        "internalType": "address",
+        "name": "_admin",
+        "type": "address"
       }
     ],
-    stateMutability: "nonpayable",
-    type: "constructor"
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "from",
-        type: "address"
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
       },
       {
-        indexed: true,
-        internalType: "address",
-        name: "to",
-        type: "address"
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256"
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "nonce",
-        type: "uint256"
-      },
-      {
-        indexed: false,
-        internalType: "string",
-        name: "transactionID",
-        type: "string"
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
       }
     ],
-    name: "TokenDeposit",
-    type: "event"
+    "name": "OwnershipTransferred",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "from",
-        type: "address"
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
       },
       {
-        indexed: true,
-        internalType: "address",
-        name: "to",
-        type: "address"
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256"
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "nonce",
-        type: "uint256"
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
       },
       {
-        indexed: false,
-        internalType: "bytes",
-        name: "sign",
-        type: "bytes"
+        "indexed": false,
+        "internalType": "string",
+        "name": "transactionID",
+        "type": "string"
       }
     ],
-    name: "TokenWithdraw",
-    type: "event"
+    "name": "TokenDeposit",
+    "type": "event"
   },
   {
-    inputs: [],
-    name: "admin",
-    outputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address"
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "sign",
+        "type": "bytes"
       }
     ],
-    stateMutability: "view",
-    type: "function"
+    "name": "TokenWithdraw",
+    "type": "event"
   },
   {
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256"
+        "indexed": false,
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "recipient",
-        type: "address"
+        "indexed": false,
+        "internalType": "address",
+        "name": "_bridgeAddress",
+        "type": "address"
       },
       {
-        internalType: "uint256",
-        name: "nonce",
-        type: "uint256"
-      },
-      {
-        internalType: "string",
-        name: "_transactionID",
-        type: "string"
+        "indexed": false,
+        "internalType": "bool",
+        "name": "_state",
+        "type": "bool"
       }
     ],
-    name: "depositTokens",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function"
+    "name": "WhiteListAddressToggled",
+    "type": "event"
   },
   {
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address"
-      },
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256"
+        "indexed": false,
+        "internalType": "bool",
+        "name": "state",
+        "type": "bool"
       }
     ],
-    name: "processedNonces",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool"
-      }
-    ],
-    stateMutability: "view",
-    type: "function"
+    "name": "WhiteListToggled",
+    "type": "event"
   },
   {
-    inputs: [],
-    name: "token",
-    outputs: [
+    "inputs": [],
+    "name": "admin",
+    "outputs": [
       {
-        internalType: "contract IToken",
-        name: "",
-        type: "address"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    stateMutability: "view",
-    type: "function"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "from",
-        type: "address"
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       },
       {
-        internalType: "address",
-        name: "to",
-        type: "address"
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
       },
       {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256"
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "nonce",
-        type: "uint256"
-      },
-      {
-        internalType: "bytes",
-        name: "signature",
-        type: "bytes"
+        "internalType": "string",
+        "name": "_transactionID",
+        "type": "string"
       }
     ],
-    name: "withdrawTokens",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function"
+    "name": "depositTokens",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "isWhiteList",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "processedNonces",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "_addresses",
+        "type": "address[]"
+      }
+    ],
+    "name": "toggleWhiteListAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "toggleWhiteListOnly",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "token",
+    "outputs": [
+      {
+        "internalType": "contract IToken",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "whiteListOn",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "signature",
+        "type": "bytes"
+      }
+    ],
+    "name": "withdrawTokens",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ];

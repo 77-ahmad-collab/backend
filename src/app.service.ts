@@ -111,7 +111,7 @@ export class AppService {
   async ClaimStatus(migrationID: string) {
     const migration = await this.migrationModel.findOne({ migrationID });
     if (migration && migration.isMigrated) {
-      // console.log(migration);
+      console.log("claim status");
       return {
         status: true,
         transactionHash: migration.toHash,
@@ -127,6 +127,7 @@ export class AppService {
   }
 
   async DepositStatus(migrationID: string) {
+    console.log("deposit status");
     const migration = await this.migrationModel.findOne({ migrationID });
     if (migration && !migration.isMigrated) {
       return {
@@ -165,7 +166,7 @@ export class AppService {
   }
 
   async UpdateToHash(signature: string,transactionHash: string) {
-    // console.log("uodate>>",signature, transactionHash);
+    console.log("uodate>>");
     await this.migrationModel.findOneAndUpdate(
       { signature: signature },
       { toHash: transactionHash },

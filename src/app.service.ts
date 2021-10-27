@@ -31,7 +31,6 @@ export class AppService {
     const blocks = await this.blockModel.findById(process.env.BRIDGE_ID);
     const { events, ethNewBlock, bnbNewBlock } = await getEvents(blocks);
 
-
     if (events && events != undefined && events.length != 0) {
       for (const event of events) {
         const amountInHex = await event.web3.eth.getTransactionReceipt(
@@ -49,11 +48,19 @@ export class AppService {
           amount: Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
         });
 
-        const calculateAmount = await calculateTransferFee(
-          Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
-        );
+        let calculateAmount = 0;
+        if (event.fromChain === 4) {
+          calculateAmount = await calculateTransferFee(
+            Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
+          );
+        } else {
+          calculateAmount = Web3.utils.fromWei(
+            returnAmountValue.toString(),
+            'gwei',
+          );
+        }
 
-        console.log(">>>>>>>>>>", calculateAmount);
+        console.log('>>>>>>>>>>', calculateAmount);
 
         await this.migrationModel.findOneAndUpdate(
           { fromHash: event.transactionHash },
@@ -92,7 +99,6 @@ export class AppService {
     const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(
       blocks,
     );
-
 
     if (events && events != undefined && events.length != 0) {
       for (const event of events) {

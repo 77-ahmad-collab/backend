@@ -26,7 +26,7 @@ export class AppService {
     return 'Hello World!';
   }
 
-  @Cron('*/15 * * * * *')
+  @Cron('*/30 * * * * *')
   async Receive() {
     const blocks = await this.blockModel.findById(process.env.BRIDGE_ID);
     const { events, ethNewBlock, bnbNewBlock } = await getEvents(blocks);
@@ -48,24 +48,10 @@ export class AppService {
           amount: Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
         });
 
-        let calculateAmount = 0;
-        if (event.fromChain === 4) {
-          calculateAmount = await calculateTransferFee(
-            Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
-          );
-        } else {
-          calculateAmount = Web3.utils.fromWei(
-            returnAmountValue.toString(),
-            'gwei',
-          );
-        }
-
-        console.log('>>>>>>>>>>', calculateAmount);
-
         await this.migrationModel.findOneAndUpdate(
           { fromHash: event.transactionHash },
           {
-            amount: calculateAmount,
+            amount: Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
             // amount: 100,
             sender: event.returnValues.from,
             receiver: event.returnValues.to,
@@ -91,7 +77,7 @@ export class AppService {
     );
   }
 
-  @Cron('*/15 * * * * *')
+  @Cron('*/30 * * * * *')
   async Withdraw() {
     const blocks = await this.blockModel.findById(
       process.env.BRIDGE_Withdraw_ID,

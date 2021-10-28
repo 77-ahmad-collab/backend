@@ -172,11 +172,6 @@ export const BRIDGE_ABI = [
         type: 'address',
       },
       {
-        internalType: 'uint256',
-        name: 'nonce',
-        type: 'uint256',
-      },
-      {
         internalType: 'string',
         name: '_transactionID',
         type: 'string',
@@ -201,6 +196,25 @@ export const BRIDGE_ABI = [
         internalType: 'bool',
         name: '',
         type: 'bool',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address',
+      },
+    ],
+    name: 'nonce',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
       },
     ],
     stateMutability: 'view',

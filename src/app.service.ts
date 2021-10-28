@@ -160,6 +160,7 @@ export class AppService {
         sender: unclaimed.sender,
         signature: unclaimed.signature,
         nonce: unclaimed.nonce,
+        migrationID: unclaimed.migrationID
       };
     }
   }

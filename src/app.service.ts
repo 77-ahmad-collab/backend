@@ -37,8 +37,10 @@ export class AppService {
           event.transactionHash,
         );
         const returnAmountValue = parseInt(
-          amountInHex.logs[amountInHex.logs.length -1].data.toString(),
-          16
+          amountInHex.logs[
+            amountInHex.logs?.length ? amountInHex.logs?.length - 1 : 0
+          ].data.toString(),
+          16,
         );
 
         let signature = await getSignatures({
@@ -160,7 +162,7 @@ export class AppService {
         sender: unclaimed.sender,
         signature: unclaimed.signature,
         nonce: unclaimed.nonce,
-        migrationID: unclaimed.migrationID
+        migrationID: unclaimed.migrationID,
       };
     }
   }

@@ -37,8 +37,8 @@ export class AppService {
           event.transactionHash,
         );
         const returnAmountValue = parseInt(
-          amountInHex.logs[0].data.toString(),
-          16,
+          amountInHex.logs[amountInHex.logs.length -1].data.toString(),
+          16
         );
 
         let signature = await getSignatures({
@@ -163,13 +163,5 @@ export class AppService {
         migrationID: unclaimed.migrationID
       };
     }
-  }
-
-  async UpdateToHash(signature: string, transactionHash: string) {
-    console.log('uodate>>');
-    await this.migrationModel.findOneAndUpdate(
-      { signature: signature },
-      { toHash: transactionHash },
-    );
   }
 }

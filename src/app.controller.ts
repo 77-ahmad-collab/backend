@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -18,11 +18,6 @@ export class AppController {
   @Get('/depositStatus/:migrationID')
   async DepositStatus(@Param('migrationID') migrationID: string) {
     return await this.appService.DepositStatus(migrationID);
-  }
-
-  @Patch('/updateToHash/:signature')
-  async UpdateToHash(@Param('signature') signature: string, @Body('transactionHash') transactionHash:string) {
-    return await this.appService.UpdateToHash(signature, transactionHash);
   }
 
   @Get('/getUnclaimed/:userAddress')

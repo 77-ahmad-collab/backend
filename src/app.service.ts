@@ -28,33 +28,31 @@ export class AppService {
 
   @Cron('*/30 * * * * *')
   async Receive() {
+    try{
     const blocks = await this.blockModel.findById(process.env.BRIDGE_ID);
     const { events, ethNewBlock, bnbNewBlock } = await getEvents(blocks);
-
+    console.log(events);
+    
     if (events && events != undefined && events.length != 0) {
       for (const event of events) {
-        const amountInHex = await event.web3.eth.getTransactionReceipt(
-          event.transactionHash,
-        );
-        const returnAmountValue = parseInt(
-          amountInHex.logs[
-            amountInHex.logs?.length ? amountInHex.logs?.length - 1 : 0
-          ].data.toString(),
-          16,
-        );
+
+        console.log(">>>",event);
+
+        console.log(Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'));
+        
 
         let signature = await getSignatures({
           sender: event.returnValues.from,
           receiver: event.returnValues.to,
           nonce: event.returnValues.nonce,
-          amount: Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
+          amount: Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'),
         });
 
         await this.migrationModel.findOneAndUpdate(
           { fromHash: event.transactionHash },
           {
-            amount: Web3.utils.fromWei(returnAmountValue.toString(), 'gwei'),
-            // amount: 100,
+            amount: Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'),
+  
             sender: event.returnValues.from,
             receiver: event.returnValues.to,
             fromChain: event.fromChain,
@@ -77,10 +75,15 @@ export class AppService {
         bnbBlock: bnbNewBlock,
       },
     );
+    }
+    catch(e){
+      console.log("catch deposit >>",e);
+    }
   }
 
   @Cron('*/30 * * * * *')
   async Withdraw() {
+    try{
     const blocks = await this.blockModel.findById(
       process.env.BRIDGE_Withdraw_ID,
     );
@@ -107,6 +110,10 @@ export class AppService {
         bnbBlock: bnbNewBlock,
       },
     );
+    }
+    catch(e){
+      console.log(e);
+    }
   }
 
   async ClaimStatus(migrationID: string) {

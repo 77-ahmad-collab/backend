@@ -21,7 +21,7 @@ export default async (bridge) => {
           );
 
           const currentBlock = await web3.eth.getBlockNumber();
-          let toBlock = currentBlock;
+          let toBlock = currentBlock-1;
           if (currentBlock - bridge.ethBlock > 99) {
             toBlock = bridge.ethBlock + 99;
           }
@@ -62,7 +62,7 @@ export default async (bridge) => {
           );
           const currentBlock = await web3.eth.getBlockNumber();
 
-          let toBlock = currentBlock <  bridge.bnbBlock ? bridge.bnbBlock : currentBlock;
+          let toBlock = currentBlock <  bridge.bnbBlock ? bridge.bnbBlock : currentBlock-1;
           if (currentBlock - bridge.bnbBlock > 99) {
             toBlock = bridge.bnbBlock + 99;
           }

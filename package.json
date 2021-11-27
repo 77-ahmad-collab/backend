@@ -27,6 +27,7 @@
     "@nestjs/mongoose": "^8.0.1",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/schedule": "^1.0.1",
+    "@nestjs/throttler": "^2.0.0",
     "aws-sdk": "^2.1004.0",
     "ethers": "^5.4.6",
     "mongoose": "^6.0.5",

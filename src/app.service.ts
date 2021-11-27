@@ -80,13 +80,15 @@ export class AppService {
     }
   }
 
-  @Cron('*/59 * * * * *')
+  @Cron('*/40 * * * * *')
   async getConfirmedTransactions() {
     try {
       const transactions = await this.migrationModel.find({
         isClaim: false,
-        toHash: { $exists: true},
+        toHash:  { $ne: null },
       });
+      console.log(transactions);
+      
       transactions.forEach(async (transaction) => {
         const randomNumber = Math.floor(Math.random() * 5) + 1;
         const chainID = transaction.toChain;
@@ -204,10 +206,28 @@ export class AppService {
   }
 
   async UpdateToHash(signature: string, transactionHash: string) {
-    console.log('uodate>>');
-    await this.migrationModel.findOneAndUpdate(
-      { signature: signature },
-      { toHash: transactionHash },
+    console.log('update>>');
+    const transaction = await this.migrationModel.findOne({
+      signature: signature
+    });
+
+    const randomNumber = Math.floor(Math.random() * 5) + 1;
+    const chainID = transaction.toChain;
+    const transactionRPC =
+      chainID == 4
+        ? `PROVIDER_ERC20${randomNumber}`
+        : `PROVIDER_BEP20${randomNumber}`
+    const web3 = new Web3(process.env[transactionRPC]);
+    console.log('transactions==>', transaction);
+    const receipt = await web3.eth.getTransactionReceipt(
+      transactionHash
     );
+    console.log('receipt==>', receipt);
+    if (receipt && receipt.status) {
+      await this.migrationModel.findOneAndUpdate(
+        { signature: signature },
+        { toHash: transactionHash },
+      );
+    }
   }
 }

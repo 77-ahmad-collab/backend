@@ -1,15 +1,16 @@
+require('dotenv').config();
 import { BRIDGE_ABI } from '../constants/ABI';
 const Web3 = require('web3');
 
 export default async (bridge) => {
-  try {
-    let allEvents = [];
-    let ethNewBlock: number;
-    let bnbNewBlock: number;
+  let allEvents = [];
+  let ethNewBlock: number;
+  let bnbNewBlock: number;
 
-    const randomNumber = Math.floor(Math.random() * 5) + 1;
+  const randomNumber = Math.floor(Math.random() * 5) + 1;
 
-    if (bridge) {
+  if (bridge) {
+    try {
       if (process.env.BRIDGE_ERC20) {
         let web3 = new Web3(process.env[`PROVIDER_ERC20${randomNumber}`]);
 
@@ -45,7 +46,12 @@ export default async (bridge) => {
           ethNewBlock = await web3.eth.getBlockNumber();
         }
       }
+    } catch (error) {
+      console.log('deposit eth block error');
+      ethNewBlock = bridge.ethBlock;
+    }
 
+    try {
       if (process.env.BRIDGE_BEP20) {
         let web3 = new Web3(process.env[`PROVIDER_BEP20${randomNumber}`]);
 
@@ -55,7 +61,8 @@ export default async (bridge) => {
             process.env.BRIDGE_BEP20,
           );
           const currentBlock = await web3.eth.getBlockNumber();
-          let toBlock = currentBlock;
+
+          let toBlock = currentBlock <  bridge.bnbBlock ? bridge.bnbBlock : currentBlock;
           if (currentBlock - bridge.bnbBlock > 99) {
             toBlock = bridge.bnbBlock + 99;
           }
@@ -80,14 +87,15 @@ export default async (bridge) => {
           bnbNewBlock = await web3.eth.getBlockNumber();
         }
       }
+    } catch (error) {
+      console.log('deposit eth block error');
+      bnbNewBlock = bridge.bnbBlock;
     }
-
-    return {
-      events: allEvents,
-      ethNewBlock: ethNewBlock,
-      bnbNewBlock: bnbNewBlock,
-    };
-  } catch (error) {
-    console.log(error);
   }
+
+  return {
+    events: allEvents,
+    ethNewBlock: ethNewBlock,
+    bnbNewBlock: bnbNewBlock,
+  };
 };

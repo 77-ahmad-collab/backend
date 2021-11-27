@@ -28,90 +28,120 @@ export class AppService {
 
   @Cron('*/30 * * * * *')
   async Receive() {
-    try{
-    const blocks = await this.blockModel.findById(process.env.BRIDGE_ID);
-    const { events, ethNewBlock, bnbNewBlock } = await getEvents(blocks);
-    console.log(events);
-    
-    if (events && events != undefined && events.length != 0) {
-      for (const event of events) {
+    try {
+      const blocks = await this.blockModel.findById(process.env.BRIDGE_ID);
+      const { events, ethNewBlock, bnbNewBlock } = await getEvents(blocks);
 
-        console.log(">>>",event);
+      if (events && events != undefined && events.length != 0) {
+        for (const event of events) {
+          // const amountInHex = await event.web3.eth.getTransactionReceipt(
+          //   event.transactionHash,
+          // );
+          // const returnAmountValue = parseInt(
+          //   amountInHex.logs[0].data.toString(),
+          //   16,
+          // );
 
-        console.log(Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'));
-        
-
-        let signature = await getSignatures({
-          sender: event.returnValues.from,
-          receiver: event.returnValues.to,
-          nonce: event.returnValues.nonce,
-          amount: Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'),
-        });
-
-        await this.migrationModel.findOneAndUpdate(
-          { fromHash: event.transactionHash },
-          {
-            amount: Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'),
-  
+          let signature = await getSignatures({
             sender: event.returnValues.from,
             receiver: event.returnValues.to,
-            fromChain: event.fromChain,
-            toChain: event.toChain,
-            fromHash: event.fromHash,
             nonce: event.returnValues.nonce,
-            migrationID: event.returnValues.transactionID,
-            signature: signature,
-            isMigrated: false,
-          },
-          { upsert: true, new: true },
-        );
-      }
-    }
+            amount: Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'),
+          });
 
-    await this.blockModel.findOneAndUpdate(
-      { _id: process.env.BRIDGE_ID },
-      {
-        ethBlock: ethNewBlock,
-        bnbBlock: bnbNewBlock,
-      },
-    );
+          await this.migrationModel.findOneAndUpdate(
+            { fromHash: event.transactionHash },
+            {
+              amount: Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'),
+              sender: event.returnValues.from,
+              receiver: event.returnValues.to,
+              fromChain: event.fromChain,
+              toChain: event.toChain,
+              fromHash: event.fromHash,
+              nonce: event.returnValues.nonce,
+              migrationID: event.returnValues.transactionID,
+              signature: signature,
+              isMigrated: false,
+            },
+            { upsert: true, new: true },
+          );
+        }
+      }
+
+      await this.blockModel.findOneAndUpdate(
+        { _id: process.env.BRIDGE_ID },
+        {
+          ethBlock: ethNewBlock,
+          bnbBlock: bnbNewBlock,
+        },
+      );
+    } catch (e) {
+      console.log(e);
     }
-    catch(e){
-      console.log("catch deposit >>",e);
+  }
+
+  @Cron('*/59 * * * * *')
+  async getConfirmedTransactions() {
+    try {
+      const transactions = await this.migrationModel.find({
+        isClaim: false,
+        toHash: { $exists: true},
+      });
+      transactions.forEach(async (transaction) => {
+        const randomNumber = Math.floor(Math.random() * 5) + 1;
+        const chainID = transaction.toChain;
+        const transactionRPC =
+          chainID == 4
+            ? `PROVIDER_ERC20${randomNumber}`
+            : `PROVIDER_BEP20${randomNumber}`
+        const web3 = new Web3(process.env[transactionRPC]);
+        console.log('transactions==>', transactions);
+        const receipt = await web3.eth.getTransactionReceipt(
+          transaction.toHash,
+        );
+        console.log('receipt==>', receipt);
+        if (receipt && receipt.status) {
+          await this.migrationModel.findOneAndUpdate(
+            { migrationID: transaction.migrationID },
+            { isClaim: true },
+          );
+        }
+      });
+    } catch (err) {
+      console.log(' getConfirmedTransactions function error==>', err);
     }
   }
 
   @Cron('*/30 * * * * *')
   async Withdraw() {
-    try{
-    const blocks = await this.blockModel.findById(
-      process.env.BRIDGE_Withdraw_ID,
-    );
-    const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(
-      blocks,
-    );
+    try {
+      const blocks = await this.blockModel.findById(
+        process.env.BRIDGE_Withdraw_ID,
+      );
+      const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(
+        blocks,
+      );
 
-    if (events && events != undefined && events.length != 0) {
-      for (const event of events) {
-        await this.migrationModel.findOneAndUpdate(
-          { signature: event.returnValues.sign },
-          {
-            isMigrated: true,
-            toHash: event.transactionHash,
-          },
-        );
+      if (events && events != undefined && events.length != 0) {
+        for (const event of events) {
+          await this.migrationModel.findOneAndUpdate(
+            { signature: event.returnValues.sign },
+            {
+              isMigrated: true,
+              toHash: event.transactionHash,
+            },
+          );
+        }
       }
-    }
 
-    await this.blockModel.findOneAndUpdate(
-      { _id: process.env.BRIDGE_Withdraw_ID },
-      {
-        ethBlock: ethNewBlock,
-        bnbBlock: bnbNewBlock,
-      },
-    );
-    }
-    catch(e){
+      await this.blockModel.findOneAndUpdate(
+        { _id: process.env.BRIDGE_Withdraw_ID },
+        {
+          ethBlock: ethNewBlock,
+          bnbBlock: bnbNewBlock,
+        },
+      );
+    } catch (e) {
       console.log(e);
     }
   }
@@ -169,8 +199,15 @@ export class AppService {
         sender: unclaimed.sender,
         signature: unclaimed.signature,
         nonce: unclaimed.nonce,
-        migrationID: unclaimed.migrationID,
       };
     }
+  }
+
+  async UpdateToHash(signature: string, transactionHash: string) {
+    console.log('uodate>>');
+    await this.migrationModel.findOneAndUpdate(
+      { signature: signature },
+      { toHash: transactionHash },
+    );
   }
 }

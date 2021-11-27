@@ -179,6 +179,7 @@ export class AppService {
         sender: migration.sender,
         signature: migration.signature,
         nonce: migration.nonce,
+        migrationID: migration.migrationID
       };
     } else {
       return { status: false };

@@ -80,15 +80,13 @@ export class AppService {
     }
   }
 
-  @Cron('*/40 * * * * *')
+  @Cron('* */2 * * * *')
   async getConfirmedTransactions() {
     try {
       const transactions = await this.migrationModel.find({
-        isClaim: false,
+        isMigrated: false,
         toHash:  { $ne: null },
       });
-      console.log(transactions);
-      
       transactions.forEach(async (transaction) => {
         const randomNumber = Math.floor(Math.random() * 5) + 1;
         const chainID = transaction.toChain;
@@ -101,11 +99,10 @@ export class AppService {
         const receipt = await web3.eth.getTransactionReceipt(
           transaction.toHash,
         );
-        console.log('receipt==>', receipt);
         if (receipt && receipt.status) {
-          await this.migrationModel.findOneAndUpdate(
-            { migrationID: transaction.migrationID },
-            { isClaim: true },
+          await this.migrationModel.findByIdAndUpdate(
+            transaction._id,
+            { isMigrated: true },
           );
         }
       });
@@ -160,6 +157,7 @@ export class AppService {
         toChain: migration.toChain,
         sender: migration.sender,
         signature: migration.signature,
+        migrationID: migration.migrationID
       };
     } else {
       return { status: false };
@@ -202,6 +200,7 @@ export class AppService {
         sender: unclaimed.sender,
         signature: unclaimed.signature,
         nonce: unclaimed.nonce,
+        migrationID: unclaimed.migrationID
       };
     }
   }

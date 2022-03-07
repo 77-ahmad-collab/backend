@@ -30,8 +30,9 @@ export class AppService {
   async Receive() {
     try {
       const blocks = await this.blockModel.findById(process.env.BRIDGE_ID);
+      console.log(blocks, 'the blocks>>>');
       const { events, ethNewBlock, bnbNewBlock } = await getEvents(blocks);
-
+      console.log(events, 'the  events during sending amount');
       if (events && events != undefined && events.length != 0) {
         for (const event of events) {
           // const amountInHex = await event.web3.eth.getTransactionReceipt(
@@ -46,13 +47,19 @@ export class AppService {
             sender: event.returnValues.from,
             receiver: event.returnValues.to,
             nonce: event.returnValues.nonce,
-            amount: Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'),
+            amount: Web3.utils.fromWei(
+              event.returnValues.amount.toString(),
+              'gwei',
+            ),
           });
 
           await this.migrationModel.findOneAndUpdate(
             { fromHash: event.transactionHash },
             {
-              amount: Web3.utils.fromWei(event.returnValues.amount.toString(), 'gwei'),
+              amount: Web3.utils.fromWei(
+                event.returnValues.amount.toString(),
+                'gwei',
+              ),
               sender: event.returnValues.from,
               receiver: event.returnValues.to,
               fromChain: event.fromChain,
@@ -85,7 +92,7 @@ export class AppService {
     try {
       const transactions = await this.migrationModel.find({
         isMigrated: false,
-        toHash:  { $ne: null },
+        toHash: { $ne: null },
       });
       transactions.forEach(async (transaction) => {
         const randomNumber = Math.floor(Math.random() * 5) + 1;
@@ -93,17 +100,16 @@ export class AppService {
         const transactionRPC =
           chainID == 4
             ? `PROVIDER_ERC20${randomNumber}`
-            : `PROVIDER_BEP20${randomNumber}`
+            : `PROVIDER_BEP20${randomNumber}`;
         const web3 = new Web3(process.env[transactionRPC]);
         console.log('transactions==>', transactions);
         const receipt = await web3.eth.getTransactionReceipt(
           transaction.toHash,
         );
         if (receipt && receipt.status) {
-          await this.migrationModel.findByIdAndUpdate(
-            transaction._id,
-            { isMigrated: true },
-          );
+          await this.migrationModel.findByIdAndUpdate(transaction._id, {
+            isMigrated: true,
+          });
         }
       });
     } catch (err) {
@@ -120,7 +126,7 @@ export class AppService {
       const { events, ethNewBlock, bnbNewBlock } = await getWithdrawEvents(
         blocks,
       );
-
+      console.log(events, 'the  events during migration');
       if (events && events != undefined && events.length != 0) {
         for (const event of events) {
           await this.migrationModel.findOneAndUpdate(
@@ -157,7 +163,7 @@ export class AppService {
         toChain: migration.toChain,
         sender: migration.sender,
         signature: migration.signature,
-        migrationID: migration.migrationID
+        migrationID: migration.migrationID,
       };
     } else {
       return { status: false };
@@ -177,7 +183,7 @@ export class AppService {
         sender: migration.sender,
         signature: migration.signature,
         nonce: migration.nonce,
-        migrationID: migration.migrationID
+        migrationID: migration.migrationID,
       };
     } else {
       return { status: false };
@@ -200,7 +206,7 @@ export class AppService {
         sender: unclaimed.sender,
         signature: unclaimed.signature,
         nonce: unclaimed.nonce,
-        migrationID: unclaimed.migrationID
+        migrationID: unclaimed.migrationID,
       };
     }
   }
@@ -208,7 +214,7 @@ export class AppService {
   async UpdateToHash(signature: string, transactionHash: string) {
     console.log('update>>');
     const transaction = await this.migrationModel.findOne({
-      signature: signature
+      signature: signature,
     });
 
     const randomNumber = Math.floor(Math.random() * 5) + 1;
@@ -216,12 +222,10 @@ export class AppService {
     const transactionRPC =
       chainID == 4
         ? `PROVIDER_ERC20${randomNumber}`
-        : `PROVIDER_BEP20${randomNumber}`
+        : `PROVIDER_BEP20${randomNumber}`;
     const web3 = new Web3(process.env[transactionRPC]);
     console.log('transactions==>', transaction);
-    const receipt = await web3.eth.getTransactionReceipt(
-      transactionHash
-    );
+    const receipt = await web3.eth.getTransactionReceipt(transactionHash);
     console.log('receipt==>', receipt);
     if (receipt && receipt.status) {
       await this.migrationModel.findOneAndUpdate(

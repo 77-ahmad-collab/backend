@@ -14,7 +14,6 @@ import { Migration, MigrationDocument } from './schemas/migration.schema';
 import getSignatures from './utils/getSignatures';
 
 const Web3 = require('web3');
-
 @Injectable()
 export class AppService {
   constructor(

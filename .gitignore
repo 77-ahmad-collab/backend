@@ -1,5 +1,7 @@
 .env
 /.env
+.github/workflows/ci.yml
+/.github
 # compiled output
 /dist
 /node_modules
